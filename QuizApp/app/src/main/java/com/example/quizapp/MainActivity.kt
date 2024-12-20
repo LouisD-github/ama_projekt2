@@ -1,5 +1,6 @@
 package com.example.quizapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.TextView
@@ -9,10 +10,11 @@ import androidx.appcompat.app.AppCompatActivity
 class MainActivity : AppCompatActivity() {
 
     private var questionNR = 0
+    private var correctAns = 0
 
     private val questions = arrayOf(
         arrayOf("Wie viele Bundesländer hat Deutschland?", "10", "16", "17", "19", "16"),
-        arrayOf("An welchem Datum fiel die Berliner Mauer?", "20. Novermeber 1989", "12. Juni 1989", "7. Oktober 1989", "9. November 1989", "9. November 1989"),
+        arrayOf("An welchem Datum fiel die Berliner Mauer?", "20. November 1989", "12. Juni 1989", "7. Oktober 1989", "9. November 1989", "9. November 1989"),
         arrayOf("Wie viele Stunden hat eine Woche?", "168", "120", "154", "196", "168"),
         arrayOf("Wer war der erste Präsident der USA?", "John Adams", "Benjamin Franklin", "George Washington", "Barack Obama", "George Washington"),
         arrayOf("Welcher Fluss ist der längste Fluss der Welt", "Der Nil", "Der Amazonas", "Der Rhein", "Der Mississippi", "Der Nil"),
@@ -34,25 +36,23 @@ class MainActivity : AppCompatActivity() {
         val ansText4: TextView = findViewById(R.id.AnsText4)
         val infoText: TextView = findViewById(R.id.infoText)
 
-        setQuestion(questionText, ansText1, ansText2, ansText3, ansText4, infoText)
+        next(questionText, ansText1, ansText2, ansText3, ansText4, infoText)
 
         findViewById<ImageButton>(R.id.btn1).setOnClickListener {
-            checkAnswer(ansText1.text.toString(), infoText)
+            checkAns(ansText1.text.toString(), questionText, ansText1, ansText2, ansText3, ansText4, infoText)
         }
         findViewById<ImageButton>(R.id.btn2).setOnClickListener {
-            checkAnswer(ansText2.text.toString(), infoText)
+            checkAns(ansText2.text.toString(), questionText, ansText1, ansText2, ansText3, ansText4, infoText)
         }
         findViewById<ImageButton>(R.id.btn3).setOnClickListener {
-            checkAnswer(ansText3.text.toString(), infoText)
+            checkAns(ansText3.text.toString(), questionText, ansText1, ansText2, ansText3, ansText4, infoText)
         }
         findViewById<ImageButton>(R.id.btn4).setOnClickListener {
-            checkAnswer(ansText4.text.toString(), infoText)
+            checkAns(ansText4.text.toString(), questionText, ansText1, ansText2, ansText3, ansText4, infoText)
         }
     }
 
-    private fun setQuestion(questionText: TextView, ansText1: TextView, ansText2: TextView,
-        ansText3: TextView, ansText4: TextView, infoText: TextView) {
-
+    private fun next(questionText: TextView, ansText1: TextView, ansText2: TextView, ansText3: TextView, ansText4: TextView, infoText: TextView) {
         if (questionNR < questions.size) {
             val question = questions[questionNR]
             questionText.text = question[0]
@@ -60,39 +60,40 @@ class MainActivity : AppCompatActivity() {
             ansText2.text = question[2]
             ansText3.text = question[3]
             ansText4.text = question[4]
-            infoText.text = "Frage " + (questionNR + 1) + " / " + questions.size
+            infoText.text = "Frage: " + (questionNR + 1) + " / " + questions.size
         } else {
-            // Quizende
+            val intent = Intent(this, QuizEnd::class.java)
+            intent.putExtra("correctAns", correctAns)
+            intent.putExtra("ansAnz", questions.size)
+            startActivity(intent)
+            finish()
         }
     }
 
-    private fun checkAnswer(selectedAnswer: String, infoText: TextView) {
+    private fun checkAns(selectedAnswer: String, questionText: TextView, ansText1: TextView, ansText2: TextView, ansText3: TextView, ansText4: TextView, infoText: TextView) {
         val question = questions[questionNR]
         if (selectedAnswer == question[5]) {
-            alert(true, question[5])
+            correctAns++
+            alert(true, question[5], questionText, ansText1, ansText2, ansText3, ansText4, infoText)
         } else {
-            alert(false, question[5])
+            alert(false, question[5], questionText, ansText1, ansText2, ansText3, ansText4, infoText)
         }
-
-        questionNR++
-        val questionText: TextView = findViewById(R.id.questionText)
-        val ansText1: TextView = findViewById(R.id.AnsText1)
-        val ansText2: TextView = findViewById(R.id.AnsText2)
-        val ansText3: TextView = findViewById(R.id.AnsText3)
-        val ansText4: TextView = findViewById(R.id.AnsText4)
-        setQuestion(questionText, ansText1, ansText2, ansText3, ansText4, infoText)
     }
 
-    private fun alert(correct: Boolean, correctAns: String) {
+    private fun alert(correct: Boolean, correctAns: String, questionText: TextView, ansText1: TextView, ansText2: TextView, ansText3: TextView, ansText4: TextView, infoText: TextView) {
         val msg = AlertDialog.Builder(this)
         if (correct) {
             msg.setTitle("Richtig!")
-            msg.setMessage("Die Lösung war: " + correctAns)
+            msg.setMessage("Die Lösung war: $correctAns")
         } else {
             msg.setTitle("Falsch!")
-            msg.setMessage("Die Lösung war: " + correctAns)
+            msg.setMessage("Die Lösung war: $correctAns")
         }
-        msg.setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
+        msg.setPositiveButton("OK") { dialog, _ ->
+            dialog.dismiss()
+            questionNR++
+            next(questionText, ansText1, ansText2, ansText3, ansText4, infoText)
+        }
         msg.show()
     }
 }
